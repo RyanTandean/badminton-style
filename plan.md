@@ -28,14 +28,12 @@ The approach is two-stage: let the math discover rally structure without bias, t
 ## What Has Been Done
 
 ### Data Loading
-
 - [x] Downloaded ShuttleSet (ShuttleSet22 still to add)
 - [x] Loaded all 106 CSV files into a single dataframe (36,572 rows, 53 columns)
 - [x] Created unique `rally_id` combining match name and rally number
 - [x] Confirmed 1,696 unique rallies across 45 matches
 
 ### Feature Engineering
-
 - [x] Aggregated stroke-level data into rally-level feature vectors
 - [x] Features: rally length, prop aroundhead, prop backhand, prop above net, avg/std landing x/y, avg player x/y
 - [x] Mapped 19 Chinese shot type labels to 5 English buckets: attacking, defensive, net, neutral, serve
@@ -43,7 +41,6 @@ The approach is two-stage: let the math discover rally structure without bias, t
 - [x] Confirmed rally length is NOT the dominant signal — removing it improved silhouette score
 
 ### Clustering (Viability Check)
-
 - [x] UMAP dimensionality reduction and visualization
 - [x] K-means clustering with silhouette scoring across k=2 to k=7
 - [x] Best result: k=2 (score 0.134), k=4 most interpretable
@@ -55,25 +52,24 @@ The approach is two-stage: let the math discover rally structure without bias, t
 
 ### Rally Archetypes (k=4, silhouette 0.126)
 
-| Cluster | Label              | Characteristics                                                          |
-| ------- | ------------------ | ------------------------------------------------------------------------ |
-| 0       | Serve and Attack   | High attacking (0.24), high serve (0.11), deep landing, moderate net     |
-| 1       | Net Dominant       | Highest net (0.45), low attacking (0.14), wide court coverage            |
-| 2       | Front Court Duel   | High net (0.42), shortest landing distance (420), tightest court width   |
-| 3       | Defensive Baseline | Highest defensive (0.35), lowest attacking (0.14), widest court coverage |
+| Cluster | Label | Characteristics |
+|---|---|---|
+| 0 | Serve and Attack | High attacking (0.24), high serve (0.11), deep landing, moderate net |
+| 1 | Net Dominant | Highest net (0.45), low attacking (0.14), wide court coverage |
+| 2 | Front Court Duel | High net (0.42), shortest landing distance (420), tightest court width |
+| 3 | Defensive Baseline | Highest defensive (0.35), lowest attacking (0.14), widest court coverage |
 
 These map onto rally types coaches already recognise — which validates the approach without predefining anything.
 
 ### Silhouette Scores by k (clean features, no rally length)
-
-| k   | Score |
-| --- | ----- |
-| 2   | 0.134 |
-| 3   | 0.128 |
-| 4   | 0.126 |
-| 5   | 0.120 |
-| 6   | 0.109 |
-| 7   | 0.108 |
+| k | Score |
+|---|---|
+| 2 | 0.134 |
+| 3 | 0.128 |
+| 4 | 0.126 |
+| 5 | 0.120 |
+| 6 | 0.109 |
+| 7 | 0.108 |
 
 k=2 wins statistically but k=4 is more narratively interesting and still defensible.
 
@@ -93,8 +89,7 @@ k=2 wins statistically but k=4 is more narratively interesting and still defensi
 ## Phases
 
 ### Phase 1 — Rally Clustering ✅ Viability Proven
-
-_The core ML work. Let the data define what rally types exist._
+*The core ML work. Let the data define what rally types exist.*
 
 - [x] Load and clean ShuttleSet
 - [x] Engineer rally-level feature vectors
@@ -109,8 +104,7 @@ _The core ML work. Let the data define what rally types exist._
 - [ ] Radar charts per cluster for interpretability
 
 ### Phase 2 — Player Fingerprinting
-
-_The sports analytics payoff. Who plays which rally types?_
+*The sports analytics payoff. Who plays which rally types?*
 
 - [ ] Assign each rally to a cluster
 - [ ] Parse actual player names from match folder names
@@ -120,13 +114,11 @@ _The sports analytics payoff. Who plays which rally types?_
 - [ ] Validate against known reputations (does Axelsen look aggressive?)
 
 ### Phase 3 — Sequence Modelling (Extension)
-
-_Motivated by the transition problem — aggregation hides momentum shifts within rallies._
+*Motivated by the transition problem — aggregation hides momentum shifts within rallies.*
 
 Almost every rally has a transition point: neutral opening → one player gains advantage → attacking phase. Two rallies with identical shot composition but opposite ordering tell completely different tactical stories. Aggregation cannot distinguish them.
 
 An LSTM autoencoder in PyTorch would encode the full stroke sequence into a latent vector, preserving temporal structure. Clustering on learned embeddings rather than handcrafted features could reveal richer archetypes:
-
 - "Quick kill" — aggressive from stroke 1
 - "Grind and pounce" — long defensive phase then sudden attack
 - "Back and forth" — multiple momentum shifts
@@ -138,9 +130,29 @@ An LSTM autoencoder in PyTorch would encode the full stroke sequence into a late
 - [ ] Re-cluster on learned embeddings
 - [ ] Compare to Phase 1 clusters — do new archetypes emerge?
 
-### Phase 4 — Counter-Styling (Extension)
+### Phase 4 — Player-Conditioned Sequence Modelling (Extension)
+*Does conditioning the rally encoder on player identity reveal player-specific sub-archetypes?*
 
-_Does a player's rally distribution shift depending on their opponent?_
+The project naturally progresses through three levels of increasing sophistication:
+
+| Level | Question | Method |
+|---|---|---|
+| 1 | What rally types exist? | Rally clustering, no player identity |
+| 2 | Which players play which rally types? | Attach player labels after clustering |
+| 3 | Do rally types differ by player identity? | Condition LSTM encoder on player identity |
+
+Level 1 and 2 find archetypes universal across all players. Level 3 asks "whose version of that rally type" — two players can both be "aggressive" by cluster assignment but execute aggression completely differently. One smashes from the rear court, one rushes the net. Level 1 and 2 call them the same archetype. Level 3 distinguishes them.
+
+This is the difference between characterizing rally types and characterizing player-specific expressions of those rally types. The second is richer and more useful to a coach.
+
+- [ ] Requires ShuttleSet22 loaded first for sufficient per-player data
+- [ ] Condition LSTM encoder on player identity (learned player embedding as additional input)
+- [ ] Extract player-conditioned rally embeddings
+- [ ] Cluster and compare to Phase 1/3 clusters — do player-specific sub-archetypes emerge?
+- [ ] Requires enough data per player — monitor per-player rally counts before attempting
+
+### Phase 5 — Counter-Styling (Extension)
+*Does a player's rally distribution shift depending on their opponent?*
 
 - [ ] Requires sufficient match count per player pair (currently thin)
 - [ ] Compute per-player per-opponent rally distributions
@@ -151,13 +163,13 @@ _Does a player's rally distribution shift depending on their opponent?_
 
 ## Tech Stack
 
-| Tool               | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `pandas` / `numpy` | Data loading, feature engineering                  |
-| `scikit-learn`     | K-means, silhouette scoring, StandardScaler        |
-| `umap-learn`       | Dimensionality reduction and visualization         |
-| `matplotlib`       | UMAP scatter, radar charts                         |
-| `PyTorch`          | LSTM autoencoder for sequence embeddings (Phase 3) |
+| Tool | Purpose |
+|---|---|
+| `pandas` / `numpy` | Data loading, feature engineering |
+| `scikit-learn` | K-means, silhouette scoring, StandardScaler |
+| `umap-learn` | Dimensionality reduction and visualization |
+| `matplotlib` | UMAP scatter, radar charts |
+| `PyTorch` | LSTM autoencoder for sequence embeddings (Phase 3) |
 
 ---
 
@@ -201,4 +213,4 @@ The CoachAI papers (ShuttleNet, DyMF, RallyNet) all focus on **forecasting** —
 
 ## Authors
 
-Ryan | University of Waterloo
+Ryan — UWAGGS | University of Waterloo
