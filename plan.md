@@ -209,7 +209,47 @@ The reason the method generalises is that it makes minimal assumptions — you d
 
 The CoachAI papers (ShuttleNet, DyMF, RallyNet) all focus on **forecasting** — predicting the next stroke given previous ones. This project is orthogonal — characterizing the **shape of whole rallies** as tactical archetypes and building player fingerprints from those archetypes. Nobody has done this with ShuttleSet.
 
+## Future Vision: Scaling via Computer Vision (Proposed Extension)
+
+### The Data Bottleneck & The Open-Source Solution
+The primary limitation of Phase 1 and 2 is data scarcity: manual stroke-level annotation is a major human bottleneck. To scale this project into a global intelligence engine, we can leverage open-source computer vision (CV) blocks to ingest unannotated video directly from broadcasts (e.g., the BWF YouTube channel).
+
+State-of-the-art architectures like the **BST (Badminton Stroke-type Transformer)**, published at the **CVPR 2026 Sports Workshops**, are entirely open-source (`Va6lue/BST-Badminton-Stroke-type-Transformer`). These pipelines use a multi-stage approach to transform raw video into structured data:
+1. **TrackNetV3:** Detects and records the high-velocity shuttlecock trajectory pixels.
+2. **RTMPose / MMPose:** Extracts 2D skeletal joint graphs (17 keypoints) to capture player posture.
+3. **Court Keypoint Detection:** Computes a **Homography Matrix ($H$)** to warp the camera's angled perspective, projecting screen pixels back onto a flat, standard 2D coordinate system:
+
+$$\begin{bmatrix} x_{\text{court}} \\ y_{\text{court}} \\ 1 \end{bmatrix} = H \begin{bmatrix} x_{\text{pixel}} \\ y_{\text{pixel}} \\ 1 \end{bmatrix}$$
+
+### Bridging the Gap: CV vs. Sports Analytics
+Computer vision engineers design models to solve a low-level perception problem: *“In these 30 video frames, did the player hit a smash or a drop?”* Once their model hits high accuracy, they stop. They output a raw stream of isolated text labels and numbers. 
+
+**This project bridges the gap by building the tactical reasoning layer on top of their perception layer.** Instead of looking at isolated strokes, our pipeline ingests their raw event streams, groups them sequentially into full rallies, and processes them through our Phase 1 & 2 clustering model. This translates machine-learning metrics into actionable coaching assets.
+[Raw Broadcast Video]
+            │
+            ▼
+┌───────────────────────┐
+│     CV Layer (BST)    │  <-- Turns raw pixels into a stream 
+│  Labels every shot    │      of individual event coordinates.
+└───────────┬───────────┘
+            │  (Sequential List of Labeled Strokes)
+            ▼
+┌───────────────────────┐
+│  Your Layer (UWAGGS)  │  <-- Synthesizes granular shots into 
+│ Groups into Archetypes│      overarching "Rally Archetypes".
+└───────────┬───────────┘
+            │  (Calculates Cluster Distributions)
+            ▼
+┌───────────────────────┐
+│   The Sports Payoff   │  <-- Automates player fingerprints 
+│  Player Fingerprints  │      and maps dynamic counter-strategies.
+└───────────────────────┘
 ---
+
+### The Strategic Payoff: Tactical Counters
+Scaling the dataset via CV unlocks true **counter-styling analytics**. By assigning cluster distributions to hundreds of unannotated matches, we can evaluate **Win-Rate Pivots** when different styles collide. 
+
+Rather than viewing player style as a static percentage, a coach can use this automated tool t
 
 ## Authors
 
